@@ -1,17 +1,18 @@
-import Image from "next/image";
+import Link from "next/link";
 
-function MyButton({title}: {title:string}){
+export default function Myapp() {
   return (
-    <button>{title}</button>
-  );
-}
+    <div className="home-page">
+      <div className="home-title-container">
+        <h1 className="home-title">Mindframe</h1>
+      </div>
 
-export default function myapp() {
-  return (
-    <div> 
-      <h1> MindFrame</h1>
-      <MyButton title = "Get Started"/>
-
+      <div className="home-button-container">
+        <Link href="/login_page">
+          <button className="home-button">GET STARTED</button>
+        </Link>
+      </div>
+      
     </div>
   );
 }
