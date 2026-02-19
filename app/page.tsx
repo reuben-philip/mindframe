@@ -12,7 +12,6 @@ export default function Myapp() {
           <button className="home-button">GET STARTED</button>
         </Link>
       </div>
-      
     </div>
   );
 }
