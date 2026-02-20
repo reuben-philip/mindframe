@@ -90,7 +90,7 @@ body {
 }
 
 h1.login-title {
-  font-size: 45px;
+  font-size: 85px;
   color: rgb(236, 86, 21);
 }
 
@@ -108,6 +108,43 @@ h1.login-title {
   padding: 2rem;
 }
 
-.input-container{
-  
+.search-bar{
+  padding: 8px 15px;
+  border: 2px solid white;
+  border-radius: 6px;
+  background: black;
+  color: white;
+  outline: none;
+  transition: box-shadow 0.3s ease, border 0.3s ease;
+  width: 1000px;
+}
+
+.search-bar:focus{
+  border: 2px solid transparent;
+
+  background: linear-gradient(#000, #000) padding-box, conic-gradient(from var(--a), #da3287, #ffde5e, #da3287) border-box;
+
+  animation: rotateGradient 3s linear infinite;
+
+  box-shadow: 0 0 8px #da3287, 0 0 16px #ffde5e;
+}
+
+
+/* animate the angle variable */
+@property --a {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes rotateGradient {
+  to { --a: 360deg; }
+}
+
+
+.user-button{
+  position: fixed; 
+  top: 30px; 
+  right: 50px;
+  z-index: 1000;
 }
