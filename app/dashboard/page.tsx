@@ -18,7 +18,7 @@ export default function Dashboard() {
           <Link className = "nav-link" href="/dashboard">Dashboard</Link>
           <Link className = "nav-link" href="/email">Email</Link>
           <Link className = "nav-link" href="/priority">Priority</Link>
-          <Link className = "nav-link" href="/calendar">Calendar</Link>
+          <Link className = "nav-link" href="/calender">Calendar</Link>
         </nav>
       </div>
 
