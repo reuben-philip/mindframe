@@ -12,6 +12,16 @@ export default function Dashboard() {
 
   return (
     <div className="home-page">
+
+      <div className = "nav-bar">
+        <nav>
+          <Link className = "nav-link" href="dashboard.tsx">Dashboard</Link>
+          <Link className = "nav-link" href="email.tsx">Email</Link>
+          <Link className = "nav-link" href="priority.tsx">Priority</Link>
+          <Link className = "nav-link" href="calender.tsx">Calender</Link>
+        </nav>
+      </div>
+
       <header>
         <h1 className="login-title">Welcome {name} </h1>
       </header>
