@@ -1,5 +1,8 @@
+"use client"
 import React from 'react';
 import Link from "next/link";
+import FullCalendar from "@FullCalendar/react";
+import dayGridPlugin from '@fullcalendar/daygrid'
 export default function Calendar() {
     return (
         <div>
@@ -11,7 +14,13 @@ export default function Calendar() {
                 <Link className = "nav-link" href="/calender">Calendar</Link>
                 </nav>
             </div>
-            <h1>Calendar</h1>
+            <div className = "calendar">
+                <FullCalendar 
+                    plugins = {[dayGridPlugin]}
+                    initialView = "dayGridMonth"
+                    height="700px"
+                />
+            </div>
         </div>
     );
 }
