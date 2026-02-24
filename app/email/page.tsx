@@ -40,6 +40,11 @@ export default function Email() {
                 </div>
             </div>
 
+            <div className = "email-graph-card">
+                <div className = "email-graph-header">
+                    <p> Email Graph </p>
+                </div>
+            </div>
         </div>
     );
 }

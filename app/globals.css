@@ -179,12 +179,13 @@ h1.login-title {
   padding: 16px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   width: 500px;
-  height: 800px;
+  height: 700px;
   background-color: rgba(0, 0, 0, 0.1);
   margin: 16px auto;
   position: absolute;
   top: 10%;
-  left: 5%;
+  left: 10%;
+  overflow: hidden;
 }
 
 .email-header {
@@ -204,10 +205,30 @@ h1.login-title {
   margin: 16px auto;
   position: absolute;
   top: 10%;
-  left: 35%;
+  left: 50%;
 }
 
 .unread-header {
+  border-bottom: 3px solid #ddd; 
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+}
+
+.email-graph-card {
+  border: 1px solid whitesmoke;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  width: 500px;
+  height: 200px;
+  background-color: rgba(0, 0, 0, 0.1);
+  margin: 16px auto;
+  position: absolute;
+  top: 40%;
+  left: 50%;
+}
+
+.email-graph-header {
   border-bottom: 3px solid #ddd; 
   margin-bottom: 12px;
   padding-bottom: 8px;
