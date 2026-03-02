@@ -186,7 +186,6 @@ h1.login-title {
   justify-items: center;
 }
 
-/* ── Email page layout ── */
 .email-page-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -208,6 +207,7 @@ h1.login-title {
   margin-bottom: 12px;
   padding-bottom: 8px;
 }
+
 
 .email-right-column {
   display: flex;
@@ -250,3 +250,72 @@ h1.login-title {
   margin-left: auto;
   margin-right: auto;
 }
+
+.priority-email-page-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  padding: 20px;
+  margin-top: 80px;
+}
+
+.priority-email-card {
+  border: 1px solid whitesmoke;
+  border-radius: 8px;
+  padding: 16px;
+  min-height: 700px;
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.priority-email-header {
+  border-bottom: 3px solid #ddd;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+}
+
+.priority-email-right-column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: center;
+}
+
+.view-card {
+  border: 1px solid whitesmoke;
+  border-radius: 8px;
+  padding: 16px;
+  min-height: 500px;
+  background-color: rgba(0, 0, 0, 0.1);
+  width: 100%;
+}
+
+.search-bar {
+  padding: 8px 10px;
+  border: 2px solid white;
+  border-radius: 6px;
+  background: black;
+  color: white;
+  outline: none;
+  transition: box-shadow 0.3s ease, border 0.3s ease;
+  width: 100%;
+  max-width: 870px;
+  box-sizing: border-box;
+}
+
+.search-bar:focus {
+  border: 2px solid transparent;
+  background: linear-gradient(#000, #000) padding-box, conic-gradient(from var(--a), white, rgb(84, 194, 231)) border-box;
+  animation: rotateGradient 3s linear infinite;
+  box-shadow: 0 0 8px #da3287, 0 0 16px #ffde5e;
+}
+
+@property --a {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes rotateGradient {
+  to { --a: 360deg; }
+}
+
