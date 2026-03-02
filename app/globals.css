@@ -25,6 +25,8 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+
+
 .home-button {
   position: relative;
   font-size: 1.2rem;
@@ -107,7 +109,6 @@ h1.login-title {
   padding: 2rem;
 }
 
-
 .search-container {
   width: 100%;
   display: flex;
@@ -182,17 +183,23 @@ h1.login-title {
   gap: 20px;
   padding: 20px;
   margin-top: 80px;
-  justify-items: center; /* FIX: centers cards in their grid cells */
+  justify-items: center;
+}
+
+/* ── Email page layout ── */
+.email-page-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  padding: 20px;
+  margin-top: 80px;
 }
 
 .email-card {
   border: 1px solid whitesmoke;
   border-radius: 8px;
   padding: 16px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  width: 100%;
-  max-width: 500px;
-  min-height: 700px; /* FIX: changed height to min-height so content doesn't overflow */
+  min-height: 700px;
   background-color: rgba(0, 0, 0, 0.1);
 }
 
@@ -202,14 +209,17 @@ h1.login-title {
   padding-bottom: 8px;
 }
 
+.email-right-column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
 .unread-card {
   border: 1px solid whitesmoke;
   border-radius: 8px;
   padding: 16px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  width: 100%;
-  max-width: 500px;
-  min-height: 200px; /* FIX: changed height to min-height */
+  min-height: 200px;
   background-color: rgba(0, 0, 0, 0.1);
 }
 
@@ -223,10 +233,7 @@ h1.login-title {
   border: 1px solid whitesmoke;
   border-radius: 8px;
   padding: 16px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  width: 100%;
-  max-width: 500px;
-  min-height: 200px; /* FIX: changed height to min-height */
+  min-height: 200px;
   background-color: rgba(0, 0, 0, 0.1);
 }
 
@@ -238,7 +245,7 @@ h1.login-title {
 
 .calendar {
   padding: 20px;
-  margin-top: 80px; /* FIX: was 1000px, now matches dashboard spacing */
+  margin-top: 80px;
   max-width: 1200px;
   margin-left: auto;
   margin-right: auto;
