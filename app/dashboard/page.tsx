@@ -30,7 +30,7 @@ export default function Dashboard() {
         <UserButton />
       </div>
 
-      <div className="input-container"> 
+      <div className="search-container"> 
         <input className="search-bar" type = "text" placeholder="What would you like to complete today"></input>
       </div>
     </div>

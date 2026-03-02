@@ -68,7 +68,6 @@ body {
   justify-content: center;
   align-items: center;
   gap: 6.7rem;
-  min-height: 100vh;
 }
 
 .home-button-container {
@@ -99,7 +98,6 @@ h1.login-title {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 2vh;
 }
 
 .login-form-container {
@@ -109,29 +107,35 @@ h1.login-title {
   padding: 2rem;
 }
 
-.search-bar{
-  padding: 8px 15px;
+
+.search-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 0 20px;
+  box-sizing: border-box;
+}
+
+.search-bar {
+  padding: 8px 10px;
   border: 2px solid white;
   border-radius: 6px;
   background: black;
-  color: balck;
+  color: white;
   outline: none;
   transition: box-shadow 0.3s ease, border 0.3s ease;
-  width: 1000px;
+  width: 100%;
+  max-width: 1500px;
+  box-sizing: border-box;
 }
 
-.search-bar:focus{
+.search-bar:focus {
   border: 2px solid transparent;
-
   background: linear-gradient(#000, #000) padding-box, conic-gradient(from var(--a), white, rgb(84, 194, 231)) border-box;
-
   animation: rotateGradient 3s linear infinite;
-
   box-shadow: 0 0 8px #da3287, 0 0 16px #ffde5e;
 }
 
-
-/* animate the angle variable */
 @property --a {
   syntax: "<angle>";
   inherits: false;
@@ -142,18 +146,17 @@ h1.login-title {
   to { --a: 360deg; }
 }
 
-
-.user-button{
-  position: fixed; 
-  top: 30px; 
+.user-button {
+  position: fixed;
+  top: 30px;
   right: 50px;
   z-index: 1000;
 }
 
-.nav-bar{
+.nav-bar {
   position: fixed;
-  top: 2%;
-  left: 0%;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 60px;
   display: flex;
@@ -161,7 +164,7 @@ h1.login-title {
   align-items: center;
 }
 
-.nav-link{
+.nav-link {
   color: white;
   text-decoration: none;
   margin-left: 10px;
@@ -173,23 +176,28 @@ h1.login-title {
   cursor: pointer;
 }
 
+.dashboard-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  padding: 20px;
+  margin-top: 80px;
+  justify-items: center; /* FIX: centers cards in their grid cells */
+}
+
 .email-card {
   border: 1px solid whitesmoke;
   border-radius: 8px;
   padding: 16px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  width: 500px;
-  height: 700px;
+  width: 100%;
+  max-width: 500px;
+  min-height: 700px; /* FIX: changed height to min-height so content doesn't overflow */
   background-color: rgba(0, 0, 0, 0.1);
-  margin: 16px auto;
-  position: absolute;
-  top: 10%;
-  left: 10%;
-  overflow: hidden;
 }
 
 .email-header {
-  border-bottom: 3px solid #ddd; 
+  border-bottom: 3px solid #ddd;
   margin-bottom: 12px;
   padding-bottom: 8px;
 }
@@ -199,17 +207,14 @@ h1.login-title {
   border-radius: 8px;
   padding: 16px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  width: 500px;
-  height: 200px;
+  width: 100%;
+  max-width: 500px;
+  min-height: 200px; /* FIX: changed height to min-height */
   background-color: rgba(0, 0, 0, 0.1);
-  margin: 16px auto;
-  position: absolute;
-  top: 10%;
-  left: 50%;
 }
 
 .unread-header {
-  border-bottom: 3px solid #ddd; 
+  border-bottom: 3px solid #ddd;
   margin-bottom: 12px;
   padding-bottom: 8px;
 }
@@ -219,22 +224,22 @@ h1.login-title {
   border-radius: 8px;
   padding: 16px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  width: 500px;
-  height: 200px;
+  width: 100%;
+  max-width: 500px;
+  min-height: 200px; /* FIX: changed height to min-height */
   background-color: rgba(0, 0, 0, 0.1);
-  margin: 16px auto;
-  position: absolute;
-  top: 40%;
-  left: 50%;
 }
 
 .email-graph-header {
-  border-bottom: 3px solid #ddd; 
+  border-bottom: 3px solid #ddd;
   margin-bottom: 12px;
   padding-bottom: 8px;
 }
 
-.calendar{
+.calendar {
   padding: 20px;
-  margin-top:"50px";
+  margin-top: 80px; /* FIX: was 1000px, now matches dashboard spacing */
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
 }
