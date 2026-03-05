@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #080809;
+  --foreground: #ededed;
 }
 
 @theme inline {
@@ -12,20 +12,13 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
-  background: var(--background);
+  background: #080809;
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
 
-
+/* ── Buttons ── */
 
 .home-button {
   position: relative;
@@ -63,6 +56,8 @@ body {
   opacity: 1;
 }
 
+/* ── Home page ── */
+
 .home-page {
   min-height: 100vh;
   display: flex;
@@ -91,6 +86,8 @@ body {
   text-shadow: 1px 1px 2px rgb(235, 86, 21), 0 0 1em rgb(235, 86, 21), 0 0 0.2em rgb(235, 86, 21);
 }
 
+/* ── Login ── */
+
 h1.login-title {
   font-size: 85px;
   color: white;
@@ -108,6 +105,8 @@ h1.login-title {
   align-items: center;
   padding: 2rem;
 }
+
+/* ── Search ── */
 
 .search-container {
   width: 100%;
@@ -132,7 +131,8 @@ h1.login-title {
 
 .search-bar:focus {
   border: 2px solid transparent;
-  background: linear-gradient(#000, #000) padding-box, conic-gradient(from var(--a), white, rgb(84, 194, 231)) border-box;
+  background: linear-gradient(#000, #000) padding-box,
+              conic-gradient(from var(--a), white, rgb(84, 194, 231)) border-box;
   animation: rotateGradient 3s linear infinite;
   box-shadow: 0 0 8px #da3287, 0 0 16px #ffde5e;
 }
@@ -146,6 +146,8 @@ h1.login-title {
 @keyframes rotateGradient {
   to { --a: 360deg; }
 }
+
+/* ── Nav ── */
 
 .user-button {
   position: fixed;
@@ -163,6 +165,7 @@ h1.login-title {
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 100;
 }
 
 .nav-link {
@@ -177,6 +180,41 @@ h1.login-title {
   cursor: pointer;
 }
 
+/* ── Shared card style (Superhuman + edge blend) ── */
+
+.email-card,
+.unread-card,
+.email-graph-card,
+.view-card,
+.priority-email-card {
+  background: #0f1117;
+  border: 1px solid #1e2130;
+  border-radius: 10px;
+  padding: 16px;
+  color: white;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.03),
+              0 8px 32px rgba(0,0,0,0.7),
+              inset 0 0 80px rgba(0,0,0,0.4);
+}
+
+/* Edge fade — blends card edges into page background */
+.email-card::after,
+.unread-card::after,
+.email-graph-card::after,
+.view-card::after,
+.priority-email-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(8,8,9,0.85) 100%);
+  pointer-events: none;
+}
+
+/* ── Dashboard ── */
+
 .dashboard-container {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -185,6 +223,8 @@ h1.login-title {
   margin-top: 80px;
   justify-items: center;
 }
+
+/* ── Email page ── */
 
 .email-page-grid {
   display: grid;
@@ -195,24 +235,14 @@ h1.login-title {
 }
 
 .email-card {
-  border: 1px solid whitesmoke;
-  border-radius: 8px;
-  padding: 16px;
   min-height: 700px;
-  background-color: rgba(0, 0, 0, 0.1);
-  background: radial-gradient(at 0% 0%, rgba(236, 86, 21, 0.15) 0px, transparent 50%),
-  radial-gradient(at 100% 100%, rgba(84, 194, 231, 0.1) 0px, transparent 50%),
-  rgb(14, 14, 26);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-
 }
 
 .email-header {
-  border-bottom: 3px solid #ddd;
+  border-bottom: 1px solid #1e2130;
   margin-bottom: 12px;
   padding-bottom: 8px;
 }
-
 
 .email-right-column {
   display: flex;
@@ -221,49 +251,26 @@ h1.login-title {
 }
 
 .unread-card {
-  border: 1px solid whitesmoke;
-  border-radius: 8px;
-  padding: 16px;
   min-height: 200px;
-  background-color: rgba(0, 0, 0, 0.1);
-  background: radial-gradient(at 0% 0%, rgba(236, 86, 21, 0.15) 0px, transparent 50%),
-  radial-gradient(at 100% 100%, rgba(84, 194, 231, 0.1) 0px, transparent 50%),
-  rgb(14, 14, 26);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-
 }
 
 .unread-header {
-  border-bottom: 3px solid #ddd;
+  border-bottom: 1px solid #1e2130;
   margin-bottom: 12px;
   padding-bottom: 8px;
 }
 
 .email-graph-card {
-  border: 1px solid whitesmoke;
-  border-radius: 8px;
-  padding: 16px;
   min-height: 200px;
-  background-color: rgba(0, 0, 0, 0.1);
-  background: radial-gradient(at 0% 0%, rgba(236, 86, 21, 0.15) 0px, transparent 50%),
-  radial-gradient(at 100% 100%, rgba(84, 194, 231, 0.1) 0px, transparent 50%),
-  rgb(14, 14, 26);
-  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .email-graph-header {
-  border-bottom: 3px solid #ddd;
+  border-bottom: 1px solid #1e2130;
   margin-bottom: 12px;
   padding-bottom: 8px;
 }
 
-.calendar {
-  padding: 20px;
-  margin-top: 80px;
-  max-width: 1200px;
-  margin-left: auto;
-  margin-right: auto;
-}
+/* ── Priority page ── */
 
 .priority-email-page-grid {
   display: grid;
@@ -274,15 +281,11 @@ h1.login-title {
 }
 
 .priority-email-card {
-  border: 1px solid whitesmoke;
-  border-radius: 8px;
-  padding: 16px;
   min-height: 700px;
-  background-color: rgba(0, 0, 0, 0.1);
 }
 
 .priority-email-header {
-  border-bottom: 3px solid #ddd;
+  border-bottom: 1px solid #1e2130;
   margin-bottom: 12px;
   padding-bottom: 8px;
 }
@@ -295,41 +298,16 @@ h1.login-title {
 }
 
 .view-card {
-  border: 1px solid whitesmoke;
-  border-radius: 8px;
-  padding: 16px;
   min-height: 500px;
-  background-color: rgba(0, 0, 0, 0.1);
   width: 100%;
 }
 
-.search-bar {
-  padding: 8px 10px;
-  border: 2px solid white;
-  border-radius: 6px;
-  background: black;
-  color: white;
-  outline: none;
-  transition: box-shadow 0.3s ease, border 0.3s ease;
-  width: 100%;
-  max-width: 870px;
-  box-sizing: border-box;
-}
+/* ── Calendar ── */
 
-.search-bar:focus {
-  border: 2px solid transparent;
-  background: linear-gradient(#000, #000) padding-box, conic-gradient(from var(--a), white, rgb(84, 194, 231)) border-box;
-  animation: rotateGradient 3s linear infinite;
-  box-shadow: 0 0 8px #da3287, 0 0 16px #ffde5e;
+.calendar {
+  padding: 20px;
+  margin-top: 80px;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
 }
-
-@property --a {
-  syntax: "<angle>";
-  inherits: false;
-  initial-value: 0deg;
-}
-
-@keyframes rotateGradient {
-  to { --a: 360deg; }
-}
-

@@ -13,6 +13,7 @@ export default function Email() {
                     <Link className="nav-link" href="/email">Email</Link>
                     <Link className="nav-link" href="/priority">Priority</Link>
                     <Link className="nav-link" href="/calender">Calendar</Link>
+                    <Link className="nav-link" href="/task">Task</Link>
                 </nav>
             </div>
 

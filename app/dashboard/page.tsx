@@ -14,12 +14,13 @@ export default function Dashboard() {
     <div className="home-page">
 
       <div className = "nav-bar">
-        <nav>
-          <Link className = "nav-link" href="/dashboard">Dashboard</Link>
-          <Link className = "nav-link" href="/email">Email</Link>
-          <Link className = "nav-link" href="/priority">Priority</Link>
-          <Link className = "nav-link" href="/calender">Calendar</Link>
-        </nav>
+      <nav>
+          <Link className="nav-link" href="/dashboard">Dashboard</Link>
+          <Link className="nav-link" href="/email">Email</Link>
+          <Link className="nav-link" href="/priority">Priority</Link>
+          <Link className="nav-link" href="/calender">Calendar</Link>
+          <Link className="nav-link" href="/task">Task</Link>
+      </nav>
       </div>
 
       <header>
