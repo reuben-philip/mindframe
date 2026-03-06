@@ -1,4 +1,4 @@
-import {google} from 'googleapis';
+/*import {google} from 'googleapis';
 import cryptoLib from 'crypto';
 import {NextResponse} from 'next/server';
 
@@ -25,4 +25,4 @@ export async function GET() {
     });
 
     return NextResponse.redirect(authorizationUrl);
-}
+}*/
