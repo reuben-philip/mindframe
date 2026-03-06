@@ -1,4 +1,4 @@
-export const runtime = "nodejs";
+/*export const runtime = "nodejs";
 
 import { google } from "googleapis";
 import { NextResponse } from "next/server";
@@ -53,4 +53,4 @@ export async function GET(req:Request){
 
     }
 
-}
+}*/
