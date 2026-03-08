@@ -302,7 +302,7 @@ h1.login-title {
   width: 100%;
 }
 
-/* ── Calendar ── */
+
 
 .calendar {
   padding: 20px;
@@ -310,4 +310,44 @@ h1.login-title {
   max-width: 1200px;
   margin-left: auto;
   margin-right: auto;
+}
+
+/* Gmail connect modal */
+
+.gmail-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  z-index: 9999;
+}
+
+.gmail-modal {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  width: 400px;
+  text-align: center;
+
+  box-shadow: 0px 10px 30px rgba(0,0,0,0.2);
+}
+
+.gmail-connect-button {
+  margin-top: 16px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+
+  background: black;
+  color: white;
+  font-weight: 500;
+}
+
+.gmail-connect-button:hover {
+  opacity: 0.85;
 }

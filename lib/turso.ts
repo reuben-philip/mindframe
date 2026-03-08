@@ -1,23 +1,18 @@
-/*mport "server-only";
-import {createClient} from '@libsql/client';
-
-export const client = createClient({
-    url: process.env.TURSO_URL!,
-    authToken: process.env.TURSO_TOKEN!,
-});*/
-
+import "server-only";
 import { createClient } from "@libsql/client";
 
-export function getDb() {
-  const url = process.env.TURSO_DATABASE_URL;
-  const authToken = process.env.TURSO_AUTH_TOKEN;
+const url = process.env.TURSO_URL;
+const authToken = process.env.TURSO_TOKEN;
 
-  if (!url) {
-    throw new Error("Missing TURSO_DATABASE_URL");
-  }
-
-  return createClient({
-    url,
-    authToken,
-  });
+if (!url) {
+  throw new Error("Missing TURSO_URL in environment variables");
 }
+
+if (!authToken) {
+  throw new Error("Missing TURSO_TOKEN in environment variables");
+}
+
+export const client = createClient({
+  url,
+  authToken,
+});

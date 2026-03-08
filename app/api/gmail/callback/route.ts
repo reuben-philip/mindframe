@@ -1,62 +1,103 @@
-/*export const runtime = "nodejs";
+// app/api/gmail/callback/route.ts
+export const runtime = "nodejs";
 
 import { google } from "googleapis";
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
+import { cookies } from "next/headers";
 import { client } from "@/lib/turso";
 
-export async function GET(req:Request){
+export async function GET(req: Request) {
+  const { userId } = await auth();
 
-    const { userId } = await auth();
+  if (!userId) {
+    return NextResponse.json(
+      { error: "Unauthorized" },
+      { status: 401 }
+    );
+  }
 
-    if(!userId){
-        return NextResponse.json({error:"Not logged into clerk"},
-            {status:400}
-        );
+  const { searchParams } = new URL(req.url);
+  const code = searchParams.get("code");
+  const returnedState = searchParams.get("state");
+
+  if (!code) {
+    return NextResponse.json(
+      { error: "No code provided" },
+      { status: 400 }
+    );
+  }
+
+  const cookieStore = await cookies();
+  const savedState = cookieStore.get("gmail_oauth_state")?.value;
+
+  if (!returnedState || !savedState || returnedState !== savedState) {
+    return NextResponse.json(
+      { error: "Invalid OAuth state" },
+      { status: 400 }
+    );
+  }
+
+  const clientId = process.env.GMAIL_CLIENT_ID;
+  const clientSecret = process.env.GMAIL_CLIENT_SECRET;
+  const redirectUri = process.env.GMAIL_REDIRECT_URL;
+
+  if (!clientId || !clientSecret || !redirectUri) {
+    return NextResponse.json(
+      { error: "Missing Gmail OAuth environment variables" },
+      { status: 500 }
+    );
+  }
+
+  const oauth2Client = new google.auth.OAuth2(
+    clientId,
+    clientSecret,
+    redirectUri
+  );
+
+  try {
+    const { tokens } = await oauth2Client.getToken(code);
+    const refreshToken = tokens.refresh_token;
+
+    if (!refreshToken) {
+      return NextResponse.json(
+        {
+          error:
+            "No refresh token received. Re-consent may be required.",
+        },
+        { status: 400 }
+      );
     }
 
-    const {searchParams} = new URL(req.url);
-    const code = searchParams.get('code');
+    await client.execute({
+      sql: `
+        INSERT INTO gmail_tokens (user_id, refresh_token, created_at, updated_at)
+        VALUES (?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        ON CONFLICT(user_id)
+        DO UPDATE SET
+          refresh_token = excluded.refresh_token,
+          updated_at = CURRENT_TIMESTAMP
+      `,
+      args: [userId, refreshToken],
+    });
 
-    if(!code){
-        return NextResponse.json({error: 'Authorization code not found'},
-        {status:400});
-    }
+    const response = NextResponse.redirect(new URL("/email", req.url));
 
-    const oauth2Client = new google.auth.OAuth2(
-        process.env.GMAIL_CLIENT_ID,
-        process.env.GMAIL_CLIENT_SECRET,
-        process.env.GMAIL_REDIRECT_URL
-    )
+    response.cookies.set("gmail_oauth_state", "", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 0,
+    });
 
-    try{
-        const {tokens} = await oauth2Client.getToken(code);
+    return response;
+  } catch (error) {
+    console.error("Gmail token exchange failed:", error);
 
-        const refreshToken = tokens.refresh_token;
-
-        if(!refreshToken){
-            return NextResponse.json({error: 'Refresh token not found in the response'}, {status: 400});
-        }  
-        
-        await client.execute({
-            sql: 'INSERT INTO gmail_tokens (user_id, refresh_token) VALUES (?, ?)',
-            args: [userId, refreshToken],
-        });
-
-        return NextResponse.redirect(new URL("/dashboard", req.url));
-    }
-
-    catch(err){
-        console.error("Error exchanging code for tokens",err);
-        return NextResponse.json({error: 'Failed to exchange authorization code for tokens'}, {status: 500});
-
-
-    }
-
-}*/
-
-import { NextResponse } from "next/server";
-
-export async function GET() {
-  return NextResponse.json({ message: "temporarily disabled" });
+    return NextResponse.json(
+      { error: "Token exchange failed" },
+      { status: 500 }
+    );
+  }
 }

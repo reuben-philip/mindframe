@@ -1,28 +1,55 @@
-/*import {google} from 'googleapis';
-import cryptoLib from 'crypto';
-import {NextResponse} from 'next/server';
+// app/api/gmail/connect/route.ts
+export const runtime = "nodejs";
 
-export async function GET() {
-    const oauth2Client = new google.auth.OAuth2(
-        process.env.GMAIL_CLIENT_ID,
-        process.env.GMAIL_CLIENT_SECRET,
-        process.env.GMAIL_REDIRECT_URL
+import { google } from "googleapis";
+import { NextResponse } from "next/server";
+import crypto from "crypto";
+
+export async function GET(req: Request) {
+  const clientId = process.env.GMAIL_CLIENT_ID;
+  const clientSecret = process.env.GMAIL_CLIENT_SECRET;
+  const redirectUri = process.env.GMAIL_REDIRECT_URL;
+
+  if (!clientId || !clientSecret || !redirectUri) {
+    return NextResponse.json(
+      { error: "Missing Gmail OAuth environment variables" },
+      { status: 500 }
     );
+  }
 
-    const scopes = ['https://www.googleapis.com/auth/gmail.readonly',
-        "https://www.googleapis.com/auth/gmail.modify",
-    "https://www.googleapis.com/auth/gmail.send"
-    ];
+  const oauth2Client = new google.auth.OAuth2(
+    clientId,
+    clientSecret,
+    redirectUri
+  );
 
-    const state = cryptoLib.randomBytes(32).toString('hex');
+  const scopes = [
+    "openid",
+    "https://www.googleapis.com/auth/userinfo.email",
+    "https://www.googleapis.com/auth/userinfo.profile",
+    "https://www.googleapis.com/auth/gmail.modify",
+    "https://www.googleapis.com/auth/gmail.send",
+  ];
 
+  const state = crypto.randomBytes(32).toString("hex");
 
-    const authorizationUrl = oauth2Client.generateAuthUrl({
-        access_type: 'offline',
-        scope: scopes,
-        inlude_granted_scopes: true, 
-        state
-    });
+  const url = oauth2Client.generateAuthUrl({
+    access_type: "offline",
+    scope: scopes,
+    include_granted_scopes: true,
+    prompt: "consent",
+    state,
+  });
 
-    return NextResponse.redirect(authorizationUrl);
-}*/
+  const response = NextResponse.redirect(url);
+
+  response.cookies.set("gmail_oauth_state", state, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 10,
+  });
+
+  return response;
+}
