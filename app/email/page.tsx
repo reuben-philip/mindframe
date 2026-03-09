@@ -120,7 +120,7 @@ export default function Email() {
                 <h2>Unread Emails</h2>
               </div>
               <div className="unread-card-body">
-                <p>{emails.length} loaded Emails</p>
+                <p>{emails.length} Emails</p>
               </div>
             </div>
 

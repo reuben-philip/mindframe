@@ -1,4 +1,3 @@
-// app/api/gmail/connect/route.ts
 export const runtime = "nodejs";
 
 import { google } from "googleapis";

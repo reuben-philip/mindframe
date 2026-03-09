@@ -8,7 +8,7 @@ export default function Dashboard() {
 
   const { user, isLoaded } = useUser();
 
-  const name = user?.firstName;
+  const name = user?.firstName ?? user?.username ?? "user";
 
   return (
     <div className="home-page">
