@@ -158,29 +158,45 @@ h1.login-title {
 
 .nav-bar {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
+  top: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: fit-content;
+  min-width: 500px;
   height: 60px;
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 100;
+  background: white;
+  border-radius: 85px;
+  padding: 0 2rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
 }
 
+
 .nav-link {
-  color: white;
+  color: black;
   text-decoration: none;
   margin-left: 10px;
   font-size: 18px;
   transition: color 0.3s ease;
-  background-color: rgb(40, 40, 40);
   border-radius: 25px;
   padding: 15px 40px;
   cursor: pointer;
 }
 
-/* ── Shared Dual Tone card style ── */
+.nav-link:hover {
+  color: rgb(236, 86, 21);
+  background: rgba(236, 86, 21, 0.1);
+}
+
+.nav-link-active {
+  color: white;
+  background-color: rgb(236, 86, 21);
+}
+
+
 
 .email-card,
 .unread-card,
@@ -198,7 +214,6 @@ h1.login-title {
               inset 0 1px 0 rgba(255,255,255,0.05);
 }
 
-/* Edge fade — softly blends edges into background */
 .email-card::after,
 .unread-card::after,
 .email-graph-card::after,
@@ -213,7 +228,6 @@ h1.login-title {
   z-index: 0;
 }
 
-/* Ensure all card content sits above the fade overlay */
 .email-card > *,
 .unread-card > *,
 .email-graph-card > *,
@@ -512,3 +526,88 @@ h1.login-title {
   background: #1d4ed8 !important;
 }
 
+.task-list {
+    padding: 2rem;
+    max-width: 700px;
+    margin: 2rem auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* Empty state */
+.no-tasks-container {
+    text-align: center;
+    margin-top: 5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.no-tasks-emoji {
+    font-size: 3rem;
+    margin: 0;
+}
+
+.no-tasks-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #1e293b !important;
+    margin: 0;
+}
+
+.no-tasks-sub {
+    font-size: 0.9rem;
+    color: #94a3b8 !important;
+    margin: 0;
+}
+
+.task-card {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.875rem;
+    padding: 1rem 2em;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+    transition: box-shadow 0.2s ease;
+}
+
+.task-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.task-card-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1e293b !important;
+    margin: 0;
+}
+
+.task-card-desc {
+    font-size: 0.9rem;
+    color: #475569 !important;
+    margin: 0;
+}
+
+.task-card-due {
+    font-size: 0.8rem;
+    color: #94a3b8 !important;
+    margin: 0;
+}
+
+.priority-badge {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.2rem 0.65rem;
+    border-radius: 9999px;
+    text-transform: uppercase;
+}
+
+.priority-low    { background: #dcfce7 !important; color: #16a34a !important; }
+.priority-medium { background: #fef9c3 !important; color: #ca8a04 !important; }
+.priority-high   { background: #fee2e2 !important; color: #dc2626 !important; }
