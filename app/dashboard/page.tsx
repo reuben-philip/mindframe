@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { UserButton, useUser } from "@clerk/nextjs";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 
 type Message = { role: "user" | "assistant"; content: string };
 
@@ -13,12 +13,15 @@ export default function Dashboard() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [chatStarted, setChatStarted] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   async function sendMessage() {
     const text = input.trim();
     if (!text || loading) return;
 
+    setChatStarted(true);
     const updated: Message[] = [...messages, { role: "user", content: text }];
     setMessages(updated);
     setInput("");
@@ -31,13 +34,18 @@ export default function Dashboard() {
     });
 
     const data = await res.json();
-    setMessages([...updated, { role: "assistant", content: data.response }]);
+    const reply = data.response ?? data.error ?? "Something went wrong.";
+    setMessages([...updated, { role: "assistant", content: reply }]);
     setLoading(false);
     inputRef.current?.focus();
   }
 
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, loading]);
+
   return (
-    <div className="home-page">
+    <div className={`home-page${chatStarted ? " chat-started" : ""}`}>
 
       <div className="nav-bar">
         <nav>
@@ -49,43 +57,42 @@ export default function Dashboard() {
         </nav>
       </div>
 
-      <header>
-        <h1 className="login-title">Welcome {name} </h1>
-      </header>
-
       <div className="user-button">
         <UserButton />
       </div>
 
-      <div className="search-container">
+      <header className={`welcome-header${chatStarted ? " welcome-header--hidden" : ""}`}>
+        <h1 className="login-title">Welcome {name}</h1>
+      </header>
+
+      <div className={`chat-window${chatStarted ? " chat-window--visible" : ""}`}>
+        {messages.map((m, i) => (
+          <div key={i} className={`chat-message chat-message--${m.role}`}>
+            <span className="chat-message__label">{m.role === "user" ? "You" : "Mindframe"}</span>
+            <p>{m.content}</p>
+          </div>
+        ))}
+        {loading && (
+          <div className="chat-message chat-message--assistant">
+            <span className="chat-message__label">Mindframe</span>
+            <p>Thinking...</p>
+          </div>
+        )}
+        <div ref={messagesEndRef} />
+      </div>
+
+      <div className={`search-container${chatStarted ? " search-container--chat" : ""}`}>
         <input
           ref={inputRef}
           className="search-bar"
           type="text"
-          placeholder="What would you like to complete today"
+          placeholder={chatStarted ? "Send a message…" : "What would you like to complete today"}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && sendMessage()}
           disabled={loading}
         />
       </div>
-
-      {messages.length > 0 && (
-        <div className="chat-messages">
-          {messages.map((m, i) => (
-            <div key={i} className={`chat-message chat-message--${m.role}`}>
-              <span className="chat-message__label">{m.role === "user" ? "You" : "Mistral"}</span>
-              <p>{m.content}</p>
-            </div>
-          ))}
-          {loading && (
-            <div className="chat-message chat-message--assistant">
-              <span className="chat-message__label">Mistral</span>
-              <p>Thinking...</p>
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }

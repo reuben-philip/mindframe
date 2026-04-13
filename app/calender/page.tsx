@@ -1,9 +1,10 @@
 "use client"
-import React from 'react';
 import Link from "next/link";
-import FullCalendar from "@fullcalendar/react";
-import dayGridPlugin from '@fullcalendar/daygrid'
+import dynamic from "next/dynamic";
 import { UserButton } from "@clerk/nextjs";
+
+const FullCalendar = dynamic(() => import("@fullcalendar/react"), { ssr: false });
+import dayGridPlugin from '@fullcalendar/daygrid'
 
 export default function Calendar() {
     return (
