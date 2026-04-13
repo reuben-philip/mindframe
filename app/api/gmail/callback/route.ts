@@ -10,10 +10,7 @@ export async function GET(req: Request) {
   const { userId } = await auth();
 
   if (!userId) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const { searchParams } = new URL(req.url);
@@ -21,20 +18,14 @@ export async function GET(req: Request) {
   const returnedState = searchParams.get("state");
 
   if (!code) {
-    return NextResponse.json(
-      { error: "No code provided" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "No code provided" }, { status: 400 });
   }
 
   const cookieStore = await cookies();
   const savedState = cookieStore.get("gmail_oauth_state")?.value;
 
   if (!returnedState || !savedState || returnedState !== savedState) {
-    return NextResponse.json(
-      { error: "Invalid OAuth state" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Invalid OAuth state" }, { status: 400 });
   }
 
   const clientId = process.env.GMAIL_CLIENT_ID;
@@ -60,22 +51,18 @@ export async function GET(req: Request) {
 
     if (!refreshToken) {
       return NextResponse.json(
-        {
-          error:
-            "No refresh token received. Re-consent may be required.",
-        },
+        { error: "No refresh token received. Re-consent may be required." },
         { status: 400 }
       );
     }
 
     await client.execute({
       sql: `
-        INSERT INTO gmail_tokens (user_id, refresh_token, created_at, updated_at)
-        VALUES (?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        INSERT INTO gmail_tokens (user_id, refresh_token, created_at)
+        VALUES (?, ?, CURRENT_TIMESTAMP)
         ON CONFLICT(user_id)
         DO UPDATE SET
-          refresh_token = excluded.refresh_token,
-          updated_at = CURRENT_TIMESTAMP
+          refresh_token = excluded.refresh_token
       `,
       args: [userId, refreshToken],
     });
@@ -93,10 +80,6 @@ export async function GET(req: Request) {
     return response;
   } catch (error) {
     console.error("Gmail token exchange failed:", error);
-
-    return NextResponse.json(
-      { error: "Token exchange failed" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Token exchange failed" }, { status: 500 });
   }
 }
