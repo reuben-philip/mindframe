@@ -79,7 +79,23 @@ export async function GET() {
     );
 
     return NextResponse.json({ emails: fullMessages });
-  } catch (error) {
+  } catch (error: any) {
+    const isTokenExpired =
+      error?.response?.data?.error === "invalid_grant" ||
+      error?.message?.includes("invalid_grant") ||
+      error?.code === 401;
+
+    if (isTokenExpired) {
+      await client.execute({
+        sql: `DELETE FROM gmail_tokens WHERE user_id = ?`,
+        args: [userId],
+      });
+      return NextResponse.json(
+        { error: "token_expired" },
+        { status: 401 }
+      );
+    }
+
     console.error("Failed to fetch inbox:", error);
     return NextResponse.json(
       { error: "Failed to fetch inbox" },

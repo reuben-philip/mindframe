@@ -56,16 +56,22 @@ export async function GET(req: Request) {
       );
     }
 
-    await client.execute({
-      sql: `
-        INSERT INTO gmail_tokens (user_id, refresh_token, created_at)
-        VALUES (?, ?, CURRENT_TIMESTAMP)
-        ON CONFLICT(user_id)
-        DO UPDATE SET
-          refresh_token = excluded.refresh_token
-      `,
-      args: [userId, refreshToken],
+    const existing = await client.execute({
+      sql: `SELECT 1 FROM gmail_tokens WHERE user_id = ? LIMIT 1`,
+      args: [userId],
     });
+
+    if (existing.rows.length > 0) {
+      await client.execute({
+        sql: `UPDATE gmail_tokens SET refresh_token = ?, created_at = CURRENT_TIMESTAMP WHERE user_id = ?`,
+        args: [refreshToken, userId],
+      });
+    } else {
+      await client.execute({
+        sql: `INSERT INTO gmail_tokens (user_id, refresh_token, created_at) VALUES (?, ?, CURRENT_TIMESTAMP)`,
+        args: [userId, refreshToken],
+      });
+    }
 
     const response = NextResponse.redirect(new URL("/email", req.url));
 
@@ -78,8 +84,21 @@ export async function GET(req: Request) {
     });
 
     return response;
-  } catch (error) {
-    console.error("Gmail token exchange failed:", error);
-    return NextResponse.json({ error: "Token exchange failed" }, { status: 500 });
+  } catch (error: any) {
+    const googleError = error?.response?.data?.error;
+    console.error("Gmail token exchange failed:", googleError, error?.response?.data);
+
+    // Check if an earlier invocation already saved the token successfully.
+    const existing = await client.execute({
+      sql: `SELECT 1 FROM gmail_tokens WHERE user_id = ? LIMIT 1`,
+      args: [userId],
+    });
+    if (existing.rows.length > 0) {
+      return NextResponse.redirect(new URL("/email", req.url));
+    }
+
+    const reason = encodeURIComponent(googleError || error?.message || "unknown");
+    const detail = encodeURIComponent(error?.response?.data?.error_description || "");
+    return NextResponse.redirect(new URL(`/email?error=connect_failed&reason=${reason}&detail=${detail}`, req.url));
   }
 }

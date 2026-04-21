@@ -17,8 +17,17 @@ export default function Email() {
   const [loading, setLoading] = useState(true);
   const [connected, setConnected] = useState(false);
   const [emails, setEmails] = useState<EmailType[]>([]);
+  const [connectError, setConnectError] = useState<string | null>(null);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const err = params.get("error");
+    if (err) {
+      const reason = params.get("reason") || "";
+      const detail = params.get("detail") || "";
+      setConnectError(`Connection failed — ${reason}${detail ? `: ${detail}` : ""}. Please try again.`);
+    }
+
     async function loadEmailPage() {
       try {
         const statusRes = await fetch("/api/gmail/status", {
@@ -38,7 +47,10 @@ export default function Email() {
             cache: "no-store",
           });
 
-          if (inboxRes.ok) {
+          if (inboxRes.status === 401) {
+            // Token expired/revoked — prompt reconnect
+            setConnected(false);
+          } else if (inboxRes.ok) {
             const inboxData = await inboxRes.json();
             setEmails(inboxData.emails || []);
           }
@@ -78,6 +90,7 @@ export default function Email() {
         <div className="gmail-modal-overlay">
           <div className="gmail-modal">
             <h2>Connect Gmail</h2>
+            {connectError && <p style={{ color: "red" }}>{connectError}</p>}
             <p>You need to connect your Gmail account to access this page.</p>
             <button
               className="gmail-connect-button"
