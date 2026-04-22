@@ -78,7 +78,17 @@ export async function GET() {
       })
     );
 
-    return NextResponse.json({ emails: fullMessages });
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, "0")}/${String(now.getDate()).padStart(2, "0")}`;
+    const unreadResponse = await gmail.users.messages.list({
+      userId: "me",
+      labelIds: ["INBOX", "UNREAD"],
+      q: `after:${dateStr}`,
+      maxResults: 500,
+    });
+    const unreadToday = (unreadResponse.data.messages || []).length;
+
+    return NextResponse.json({ emails: fullMessages, unreadToday });
   } catch (error: any) {
     const isTokenExpired =
       error?.response?.data?.error === "invalid_grant" ||

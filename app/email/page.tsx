@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import "../globals.css";
 
 type EmailType = {
@@ -17,6 +18,7 @@ export default function Email() {
   const [loading, setLoading] = useState(true);
   const [connected, setConnected] = useState(false);
   const [emails, setEmails] = useState<EmailType[]>([]);
+  const [unreadToday, setUnreadToday] = useState<number>(0);
   const [connectError, setConnectError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -53,6 +55,7 @@ export default function Email() {
           } else if (inboxRes.ok) {
             const inboxData = await inboxRes.json();
             setEmails(inboxData.emails || []);
+            setUnreadToday(inboxData.unreadToday ?? 0);
           }
         }
       } catch (error) {
@@ -65,6 +68,16 @@ export default function Email() {
 
     loadEmailPage();
   }, []);
+
+  const emailsByDay = Object.entries(
+    emails.reduce<Record<string, number>>((acc, email) => {
+      const day = new Date(email.date).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      acc[day] = (acc[day] ?? 0) + 1;
+      return acc;
+    }, {})
+  )
+    .map(([day, count]) => ({ day, count }))
+    .slice(-7);
 
   if (loading) {
     return <div>Loading...</div>;
@@ -133,14 +146,25 @@ export default function Email() {
                 <h2>Unread Emails</h2>
               </div>
               <div className="unread-card-body">
-                <p>{emails.length} Emails</p>
+                <p>{unreadToday} Emails</p>
               </div>
             </div>
 
             <div className="email-graph-card">
               <div className="email-graph-header">
-                <p>Email Graph</p>
+                <p>Emails per Day</p>
               </div>
+              <ResponsiveContainer width="75%" height={180}>
+                <BarChart data={emailsByDay} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+                  <XAxis dataKey="day" tick={{ fill: "rgba(255,255,255,0.6)", fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <YAxis allowDecimals={false} tick={{ fill: "rgba(255,255,255,0.6)", fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <Tooltip
+                    contentStyle={{ background: "rgba(8,8,9,0.9)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: "white" }}
+                    cursor={{ fill: "rgba(255,255,255,0.05)" }}
+                  />
+                  <Bar dataKey="count" fill="rgba(236,86,21,0.8)" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </div>
         </div>
