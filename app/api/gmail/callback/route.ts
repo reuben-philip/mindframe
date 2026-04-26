@@ -50,8 +50,20 @@ export async function GET(req: Request) {
     const refreshToken = tokens.refresh_token;
 
     if (!refreshToken) {
+      // Google only returns a refresh_token on the first consent grant.
+      // If the old token exists, keep it (scopes may be fine).
+      // Otherwise force the user to re-connect via /api/gmail/connect.
+      const existing = await client.execute({
+        sql: `SELECT refresh_token FROM gmail_tokens WHERE user_id = ? LIMIT 1`,
+        args: [userId],
+      });
+      if (existing.rows.length > 0) {
+        const response = NextResponse.redirect(new URL("/email", req.url));
+        response.cookies.set("gmail_oauth_state", "", { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: 0 });
+        return response;
+      }
       return NextResponse.json(
-        { error: "No refresh token received. Re-consent may be required." },
+        { error: "No refresh token received. Please disconnect and reconnect via /api/gmail/connect." },
         { status: 400 }
       );
     }
