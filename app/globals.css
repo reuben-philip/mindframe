@@ -462,6 +462,140 @@ h1.login-title {
   width: 100%;
 }
 
+/* ── Email detail modal ── */
+
+.email-modal {
+  background: #0f0f10;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 14px;
+  padding: 28px;
+  width: 90%;
+  max-width: 680px;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.9);
+}
+
+.email-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.5);
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.email-modal-close:hover { color: white; }
+
+.email-modal-from {
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.5);
+  margin: 0 0 6px;
+}
+
+.email-modal-subject {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: white;
+  margin: 0;
+}
+
+.email-modal-body {
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.8);
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ── Email draft card ── */
+
+.email-draft-card {
+  position: fixed;
+  bottom: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 48px);
+  max-width: 900px;
+  background: #0f0f10;
+  border: 1px solid rgba(236, 86, 21, 0.4);
+  border-radius: 14px;
+  padding: 20px 24px;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.95), 0 0 0 1px rgba(236,86,21,0.15);
+  animation: msgIn 0.2s ease;
+}
+
+.email-draft-card h3 {
+  margin: 0 0 4px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgb(236, 86, 21);
+}
+
+.email-draft-card label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.45);
+  margin-bottom: -6px;
+}
+
+.email-draft-card input,
+.email-draft-card textarea {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: white;
+  font-size: 0.9rem;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border 0.2s ease;
+  resize: none;
+}
+
+.email-draft-card input:focus,
+.email-draft-card textarea:focus {
+  border-color: rgba(236, 86, 21, 0.5);
+  background: rgba(255,255,255,0.08);
+}
+
+.email-draft-card button {
+  padding: 7px 18px;
+  border-radius: 8px;
+  border: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.email-draft-card button:first-child {
+  background: rgb(236, 86, 21);
+  color: white;
+}
+
+.email-draft-card button:last-child {
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.7);
+}
+
+.email-draft-card button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 /* ── Calendar ── */
 
 .calendar {

@@ -14,12 +14,32 @@ type EmailType = {
   date: string;
 };
 
+type SelectedEmail = EmailType & { body: string };
+
 export default function Email() {
   const [loading, setLoading] = useState(true);
   const [connected, setConnected] = useState(false);
   const [emails, setEmails] = useState<EmailType[]>([]);
   const [unreadToday, setUnreadToday] = useState<number>(0);
   const [connectError, setConnectError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<SelectedEmail | null>(null);
+  const [loadingBody, setLoadingBody] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+  async function fetchInbox() {
+    try {
+      const inboxRes = await fetch("/api/gmail/inbox", { cache: "no-store" });
+      if (inboxRes.status === 401) { setConnected(false); return; }
+      if (inboxRes.ok) {
+        const inboxData = await inboxRes.json();
+        setEmails(inboxData.emails || []);
+        setUnreadToday(inboxData.unreadToday ?? 0);
+        setLastUpdated(new Date());
+      }
+    } catch (error) {
+      console.error("Failed to fetch inbox:", error);
+    }
+  }
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -32,32 +52,11 @@ export default function Email() {
 
     async function loadEmailPage() {
       try {
-        const statusRes = await fetch("/api/gmail/status", {
-          cache: "no-store",
-        });
-
-        if (!statusRes.ok) {
-          setConnected(false);
-          return;
-        }
-
+        const statusRes = await fetch("/api/gmail/status", { cache: "no-store" });
+        if (!statusRes.ok) { setConnected(false); return; }
         const statusData = await statusRes.json();
         setConnected(statusData.connected);
-
-        if (statusData.connected) {
-          const inboxRes = await fetch("/api/gmail/inbox", {
-            cache: "no-store",
-          });
-
-          if (inboxRes.status === 401) {
-            // Token expired/revoked — prompt reconnect
-            setConnected(false);
-          } else if (inboxRes.ok) {
-            const inboxData = await inboxRes.json();
-            setEmails(inboxData.emails || []);
-            setUnreadToday(inboxData.unreadToday ?? 0);
-          }
-        }
+        if (statusData.connected) await fetchInbox();
       } catch (error) {
         console.error("Failed to load email page:", error);
         setConnected(false);
@@ -67,7 +66,18 @@ export default function Email() {
     }
 
     loadEmailPage();
+    const interval = setInterval(fetchInbox, 30000);
+    return () => clearInterval(interval);
   }, []);
+
+  async function openEmail(email: EmailType) {
+    setLoadingBody(true);
+    setSelected({ ...email, body: "" });
+    const res = await fetch(`/api/gmail/message/${email.id}`);
+    const data = await res.json();
+    setSelected({ ...email, body: data.body ?? "Could not load body." });
+    setLoadingBody(false);
+  }
 
   const emailsByDay = Object.entries(
     emails.reduce<Record<string, number>>((acc, email) => {
@@ -120,8 +130,12 @@ export default function Email() {
       {connected && (
         <div className="email-page-grid">
           <div className="email-card">
-            <div className="email-header">
+            <div className="email-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h2>Emails</h2>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                {lastUpdated && <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)" }}>Updated {lastUpdated.toLocaleTimeString()}</span>}
+                <button onClick={fetchInbox} style={{ fontSize: "12px", padding: "4px 10px", cursor: "pointer", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "white" }}>Refresh</button>
+              </div>
             </div>
 
             <div className="email-card-body">
@@ -129,7 +143,7 @@ export default function Email() {
                 <p>No emails found.</p>
               ) : (
                 emails.map((email) => (
-                  <div key={email.id} className="email-item">
+                  <div key={email.id} className="email-item" onClick={() => openEmail(email)} style={{ cursor: "pointer" }}>
                     <p><strong>From:</strong> {email.from}</p>
                     <p><strong>Subject:</strong> {email.subject}</p>
                     <p>{email.snippet}</p>
@@ -165,6 +179,20 @@ export default function Email() {
                   <Bar dataKey="count" fill="rgba(236,86,21,0.8)" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selected && (
+        <div className="gmail-modal-overlay" onClick={() => setSelected(null)}>
+          <div className="email-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="email-modal-close" onClick={() => setSelected(null)}>✕</button>
+            <p className="email-modal-from"><strong>From:</strong> {selected.from}</p>
+            <h2 className="email-modal-subject">{selected.subject}</h2>
+            <hr style={{ borderColor: "rgba(255,255,255,0.07)", margin: "12px 0" }} />
+            <div className="email-modal-body">
+              {loadingBody ? "Loading..." : selected.body}
             </div>
           </div>
         </div>

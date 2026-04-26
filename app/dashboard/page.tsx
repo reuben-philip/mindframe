@@ -5,6 +5,7 @@ import { UserButton, useUser } from "@clerk/nextjs";
 import { useState, useRef, useEffect } from "react";
 
 type Message = { role: "user" | "assistant"; content: string };
+type EmailDraft = { to: string; subject: string; body: string };
 
 export default function Dashboard() {
   const { user } = useUser();
@@ -14,6 +15,8 @@ export default function Dashboard() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [chatStarted, setChatStarted] = useState(false);
+  const [draft, setDraft] = useState<EmailDraft | null>(null);
+  const [sendStatus, setSendStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -35,9 +38,26 @@ export default function Dashboard() {
 
     const data = await res.json();
     const reply = data.response ?? data.error ?? "Something went wrong.";
-    setMessages([...updated, { role: "assistant", content: reply }]);
+    const draftMatch = reply.match(/<email_draft>([\s\S]*?)<\/email_draft>/);
+    if (draftMatch) {
+      try { setDraft(JSON.parse(draftMatch[1])); } catch {}
+      setMessages([...updated, { role: "assistant", content: "Here's a draft for you — edit it below and hit Send when ready." }]);
+    } else {
+      setMessages([...updated, { role: "assistant", content: reply }]);
+    }
     setLoading(false);
     inputRef.current?.focus();
+  }
+
+  async function sendEmail() {
+    if (!draft) return;
+    setSendStatus("sending");
+    const res = await fetch("/api/gmail/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(draft),
+    });
+    setSendStatus(res.ok ? "sent" : "error");
   }
 
   useEffect(() => {
@@ -80,6 +100,25 @@ export default function Dashboard() {
         )}
         <div ref={messagesEndRef} />
       </div>
+
+      {draft && (
+        <div className="email-draft-card">
+          <h3>Email Draft</h3>
+          <label>To</label>
+          <input value={draft.to} onChange={(e) => setDraft({ ...draft, to: e.target.value })} />
+          <label>Subject</label>
+          <input value={draft.subject} onChange={(e) => setDraft({ ...draft, subject: e.target.value })} />
+          <label>Body</label>
+          <textarea rows={6} value={draft.body} onChange={(e) => setDraft({ ...draft, body: e.target.value })} />
+          <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
+            <button onClick={sendEmail} disabled={sendStatus === "sending" || sendStatus === "sent"}>
+              {sendStatus === "sending" ? "Sending..." : sendStatus === "sent" ? "Sent!" : "Send"}
+            </button>
+            <button onClick={() => { setDraft(null); setSendStatus("idle"); }}>Dismiss</button>
+          </div>
+          {sendStatus === "error" && <p style={{ color: "red" }}>Failed to send. Try again.</p>}
+        </div>
+      )}
 
       <div className={`search-container${chatStarted ? " search-container--chat" : ""}`}>
         <input
