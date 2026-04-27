@@ -8,13 +8,18 @@ import { client } from "@/lib/turso";
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!userId){
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   const result = await client.execute({
     sql: `SELECT refresh_token FROM gmail_tokens WHERE user_id = ? LIMIT 1`,
     args: [userId],
   });
-  if (!result.rows.length) return NextResponse.json({ error: "Not connected" }, { status: 401 });
+  
+  if (!result.rows.length){
+    return NextResponse.json({ error: "Not connected" }, { status: 401 });
+  }
 
   const oauth2Client = new google.auth.OAuth2(
     process.env.GMAIL_CLIENT_ID,

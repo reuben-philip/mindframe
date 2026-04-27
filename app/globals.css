@@ -644,10 +644,33 @@ h1.login-title {
 
 .email-item {
   padding: 10px 0;
+  position: relative;
 }
 
 .email-item p {
   margin: 4px 0;
+}
+
+.email-item-content {
+  cursor: pointer;
+}
+
+.email-delete-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: color 0.2s ease;
+}
+
+.email-delete-btn:hover {
+  color: rgba(236, 86, 21, 0.8);
 }
 
 /* ── Task page button ── */

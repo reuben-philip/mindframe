@@ -143,10 +143,23 @@ export default function Email() {
                 <p>No emails found.</p>
               ) : (
                 emails.map((email) => (
-                  <div key={email.id} className="email-item" onClick={() => openEmail(email)} style={{ cursor: "pointer" }}>
-                    <p><strong>From:</strong> {email.from}</p>
-                    <p><strong>Subject:</strong> {email.subject}</p>
-                    <p>{email.snippet}</p>
+                  <div key={email.id} className="email-item">
+                    <div className="email-item-content" onClick={() => openEmail(email)}>
+                      <p><strong>From:</strong> {email.from}</p>
+                      <p><strong>Subject:</strong> {email.subject}</p>
+                      <p>{email.snippet}</p>
+                    </div>
+                    <button
+                      className="email-delete-btn"
+                      title="Move to Trash"
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        await fetch(`/api/gmail/delete/${email.id}`, { method: "DELETE" });
+                        setEmails((prev) => prev.filter((em) => em.id !== email.id));
+                      }}
+                    >
+                      🗑
+                    </button>
                     <hr />
                   </div>
                 ))

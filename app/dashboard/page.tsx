@@ -17,6 +17,7 @@ export default function Dashboard() {
   const [chatStarted, setChatStarted] = useState(false);
   const [draft, setDraft] = useState<EmailDraft | null>(null);
   const [sendStatus, setSendStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [emails, setEmails] = useState<{ id: string; from: string; subject: string; snippet: string; date: string }[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -33,15 +34,25 @@ export default function Dashboard() {
     const res = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages: updated, userName: name }),
+      body: JSON.stringify({ messages: updated, userName: name, emails }),
     });
 
     const data = await res.json();
     const reply = data.response ?? data.error ?? "Something went wrong.";
     const draftMatch = reply.match(/<email_draft>([\s\S]*?)<\/email_draft>/);
+    const deleteMatch = reply.match(/<email_delete>([\s\S]*?)<\/email_delete>/);
     if (draftMatch) {
       try { setDraft(JSON.parse(draftMatch[1])); } catch {}
       setMessages([...updated, { role: "assistant", content: "Here's a draft for you — edit it below and hit Send when ready." }]);
+    } else if (deleteMatch) {
+      try {
+        const { id } = JSON.parse(deleteMatch[1]);
+        await fetch(`/api/gmail/delete/${id}`, { method: "DELETE" });
+        setEmails(prev => prev.filter(e => e.id !== id));
+        setMessages([...updated, { role: "assistant", content: "Done — moved that email to Trash." }]);
+      } catch {
+        setMessages([...updated, { role: "assistant", content: "I couldn't delete that email. Please try again." }]);
+      }
     } else {
       setMessages([...updated, { role: "assistant", content: reply }]);
     }
@@ -59,6 +70,12 @@ export default function Dashboard() {
     });
     setSendStatus(res.ok ? "sent" : "error");
   }
+
+  useEffect(() => {
+    fetch("/api/gmail/inbox", { cache: "no-store" })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data?.emails) setEmails(data.emails); });
+  }, []);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
