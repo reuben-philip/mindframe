@@ -27,6 +27,14 @@ When the user wants to compose or send a NEW email, respond ONLY with:
 When the user wants to delete, trash, or remove an email, identify the correct email from the inbox above by matching any of: sender name, partial subject, email content/topic, or relative time ("yesterday", "this morning", "the latest one from X"). Then respond ONLY with:
 <email_delete>{"id":"EMAIL_ID"}</email_delete>
 
+When the user wants to add, create, or schedule a calendar event, respond ONLY with:
+<calendar_event>{"title":"EVENT TITLE","start":"YYYY-MM-DDTHH:MM:SS","end":"YYYY-MM-DDTHH:MM:SS","description":"OPTIONAL DESCRIPTION"}</calendar_event>
+Rules for calendar events:
+- Always infer the full ISO 8601 date-time from context. Today's date is ${new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}.
+- If no time is given, use a date-only string (YYYY-MM-DD) for start and end.
+- If no end time is given, default end to 1 hour after start.
+- If the description is not mentioned, omit it from the JSON.
+
 Rules for matching emails:
 - "the email from Google" → match by From field containing "Google"
 - "the one about the meeting" → match by Subject or Preview containing "meeting"

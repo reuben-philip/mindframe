@@ -6,6 +6,7 @@ import { useState, useRef, useEffect } from "react";
 
 type Message = { role: "user" | "assistant"; content: string };
 type EmailDraft = { to: string; subject: string; body: string };
+type CalendarEvent = { title: string; start: string; end?: string; description?: string };
 
 export default function Dashboard() {
   const { user } = useUser();
@@ -17,6 +18,8 @@ export default function Dashboard() {
   const [chatStarted, setChatStarted] = useState(false);
   const [draft, setDraft] = useState<EmailDraft | null>(null);
   const [sendStatus, setSendStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [calendarEvent, setCalendarEvent] = useState<CalendarEvent | null>(null);
+  const [calendarStatus, setCalendarStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [emails, setEmails] = useState<{ id: string; from: string; subject: string; snippet: string; date: string }[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -41,6 +44,7 @@ export default function Dashboard() {
     const reply = data.response ?? data.error ?? "Something went wrong.";
     const draftMatch = reply.match(/<email_draft>([\s\S]*?)<\/email_draft>/);
     const deleteMatch = reply.match(/<email_delete>([\s\S]*?)<\/email_delete>/);
+    const calendarMatch = reply.match(/<calendar_event>([\s\S]*?)<\/calendar_event>/);
     if (draftMatch) {
       try { setDraft(JSON.parse(draftMatch[1])); } catch {}
       setMessages([...updated, { role: "assistant", content: "Here's a draft for you — edit it below and hit Send when ready." }]);
@@ -53,11 +57,34 @@ export default function Dashboard() {
       } catch {
         setMessages([...updated, { role: "assistant", content: "I couldn't delete that email. Please try again." }]);
       }
+    } else if (calendarMatch) {
+      try {
+        const parsed = JSON.parse(calendarMatch[1]);
+        setCalendarEvent(parsed);
+        setCalendarStatus("idle");
+        setMessages([...updated, { role: "assistant", content: `Got it — I'll add "${parsed.title}" to your calendar. Confirm below.` }]);
+      } catch {
+        setMessages([...updated, { role: "assistant", content: "I understood your event but couldn't parse the details. Please try again." }]);
+      }
     } else {
       setMessages([...updated, { role: "assistant", content: reply }]);
     }
     setLoading(false);
     inputRef.current?.focus();
+  }
+
+  async function saveCalendarEvent() {
+    if (!calendarEvent) return;
+    setCalendarStatus("saving");
+    const res = await fetch("/api/gmail/calendar/create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...calendarEvent,
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      }),
+    });
+    setCalendarStatus(res.ok ? "saved" : "error");
   }
 
   async function sendEmail() {
@@ -118,6 +145,35 @@ export default function Dashboard() {
         )}
         <div ref={messagesEndRef} />
       </div>
+
+      {calendarEvent && (
+        <div className="email-draft-card">
+          <h3>Calendar Event</h3>
+          <label>Title</label>
+          <input value={calendarEvent.title} onChange={(e) => setCalendarEvent({ ...calendarEvent, title: e.target.value })} />
+          <label>Start</label>
+          <input
+            type="datetime-local"
+            value={calendarEvent.start.slice(0, 16)}
+            onChange={(e) => setCalendarEvent({ ...calendarEvent, start: e.target.value })}
+          />
+          <label>End</label>
+          <input
+            type="datetime-local"
+            value={(calendarEvent.end ?? "").slice(0, 16)}
+            onChange={(e) => setCalendarEvent({ ...calendarEvent, end: e.target.value })}
+          />
+          <label>Description</label>
+          <textarea rows={3} value={calendarEvent.description ?? ""} onChange={(e) => setCalendarEvent({ ...calendarEvent, description: e.target.value })} />
+          <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
+            <button onClick={saveCalendarEvent} disabled={calendarStatus === "saving" || calendarStatus === "saved"}>
+              {calendarStatus === "saving" ? "Saving..." : calendarStatus === "saved" ? "Saved!" : "Add to Calendar"}
+            </button>
+            <button onClick={() => { setCalendarEvent(null); setCalendarStatus("idle"); }}>Dismiss</button>
+          </div>
+          {calendarStatus === "error" && <p style={{ color: "red" }}>Failed to save. Make sure your Google account is connected.</p>}
+        </div>
+      )}
 
       {draft && (
         <div className="email-draft-card">
