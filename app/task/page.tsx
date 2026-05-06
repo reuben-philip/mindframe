@@ -1,27 +1,48 @@
 "use client"
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
 import { useForm } from 'react-hook-form';
-import "../globals.css";
 
 interface Task {
+    id: number;
     name: string;
     description: string;
     dueDate: string;
     priority: string;
 }
 
+type TaskFormData = Omit<Task, "id">;
+
 export default function Task() {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const { register, handleSubmit, reset } = useForm<Task>();
+    const [loading, setLoading] = useState(true);
+    const { register, handleSubmit, reset } = useForm<TaskFormData>();
 
-    const onSubmit = (data: Task) => {
-        setTasks([...tasks, data]);
+    useEffect(() => {
+        fetch("/api/tasks")
+            .then((r) => r.json())
+            .then((data) => setTasks(data.tasks ?? []))
+            .finally(() => setLoading(false));
+    }, []);
+
+    const onSubmit = async (data: TaskFormData) => {
+        const res = await fetch("/api/tasks", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+        });
+        const { id } = await res.json();
+        setTasks([{ id, ...data }, ...tasks]);
         setIsModalOpen(false);
         reset();
-    }
+    };
+
+    const deleteTask = async (id: number) => {
+        await fetch(`/api/tasks/${id}`, { method: "DELETE" });
+        setTasks(tasks.filter((t) => t.id !== id));
+    };
 
     return (
         <div>
@@ -40,31 +61,43 @@ export default function Task() {
                 <UserButton />
             </div>
 
-            {/* Task List */}
             <div className="task-list">
-                {tasks.length === 0 ? (
+                {loading ? (
+                    <div className="no-tasks-container">
+                        <p className="no-tasks-title">Loading tasks...</p>
+                    </div>
+                ) : tasks.length === 0 ? (
                     <div className="no-tasks-container">
                         <p className="no-tasks-title">No tasks yet</p>
                         <p className="no-tasks-sub">Take some time to relax</p>
                     </div>
                 ) : (
-                    tasks.map((task, index) => (
-                        <div key={index} className="task-card">
+                    tasks.map((task) => (
+                        <div key={task.id} className="task-card">
                             <div className="task-card-header">
                                 <h3 className="task-card-name">{task.name}</h3>
-                                {task.priority && (
-                                    <span className={`priority-badge priority-${task.priority}`}>
-                                        {task.priority}
-                                    </span>
-                                )}
+                                <div className="task-card-actions">
+                                    {task.priority && (
+                                        <span className={`priority-badge priority-${task.priority}`}>
+                                            {task.priority}
+                                        </span>
+                                    )}
+                                    <button
+                                        className="task-delete-btn"
+                                        onClick={() => deleteTask(task.id)}
+                                        aria-label="Delete task"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
                             </div>
                             {task.description && <p className="task-card-desc">{task.description}</p>}
-                            {task.dueDate && <p className="task-card-due">{task.dueDate}</p>}
+                            {task.dueDate && <p className="task-card-due">Due: {task.dueDate}</p>}
                         </div>
                     ))
                 )}
             </div>
-            
+
             {isModalOpen && (
                 <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
                     <div className="modal" onClick={(e) => e.stopPropagation()}>
