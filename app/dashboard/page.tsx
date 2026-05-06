@@ -7,6 +7,7 @@ import { useState, useRef, useEffect } from "react";
 type Message = { role: "user" | "assistant"; content: string };
 type EmailDraft = { to: string; subject: string; body: string };
 type CalendarEvent = { title: string; start: string; end?: string; description?: string };
+type Conversation = { id: number; title: string };
 
 export default function Dashboard() {
   const { user } = useUser();
@@ -21,8 +22,58 @@ export default function Dashboard() {
   const [calendarEvent, setCalendarEvent] = useState<CalendarEvent | null>(null);
   const [calendarStatus, setCalendarStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [emails, setEmails] = useState<{ id: string; from: string; subject: string; snippet: string; date: string }[]>([]);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [activeConvId, setActiveConvId] = useState<number | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    async function init() {
+      const res = await fetch("/api/chat/history");
+      if (res.ok) {
+        const data = await res.json();
+        const convs: Conversation[] = data.conversations ?? [];
+        setConversations(convs);
+        if (convs.length > 0) loadConversation(convs[0].id);
+      }
+    }
+    init();
+
+    fetch("/api/gmail/inbox", { cache: "no-store" })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data?.emails) setEmails(data.emails); });
+  }, []);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, loading]);
+
+  async function loadConversation(id: number) {
+    const res = await fetch(`/api/chat/history/${id}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    const msgs: Message[] = data.messages ?? [];
+    setActiveConvId(id);
+    setMessages(msgs);
+    if (msgs.length > 0) setChatStarted(true);
+  }
+
+  function startNewChat() {
+    setActiveConvId(null);
+    setMessages([]);
+    setChatStarted(false);
+    setDraft(null);
+    setCalendarEvent(null);
+    setSendStatus("idle");
+    setCalendarStatus("idle");
+    setTimeout(() => inputRef.current?.focus(), 50);
+  }
+
+  async function deleteConversation(id: number) {
+    await fetch(`/api/chat/history/${id}`, { method: "DELETE" });
+    setConversations(prev => prev.filter(c => c.id !== id));
+    if (activeConvId === id) startNewChat();
+  }
 
   async function sendMessage() {
     const text = input.trim();
@@ -42,35 +93,65 @@ export default function Dashboard() {
 
     const data = await res.json();
     const reply = data.response ?? data.error ?? "Something went wrong.";
+
+    let assistantContent = reply;
     const draftMatch = reply.match(/<email_draft>([\s\S]*?)<\/email_draft>/);
     const deleteMatch = reply.match(/<email_delete>([\s\S]*?)<\/email_delete>/);
     const calendarMatch = reply.match(/<calendar_event>([\s\S]*?)<\/calendar_event>/);
+
     if (draftMatch) {
       try { setDraft(JSON.parse(draftMatch[1])); } catch {}
-      setMessages([...updated, { role: "assistant", content: "Here's a draft for you — edit it below and hit Send when ready." }]);
+      assistantContent = "Here's a draft for you — edit it below and hit Send when ready.";
     } else if (deleteMatch) {
       try {
         const { id } = JSON.parse(deleteMatch[1]);
         await fetch(`/api/gmail/delete/${id}`, { method: "DELETE" });
         setEmails(prev => prev.filter(e => e.id !== id));
-        setMessages([...updated, { role: "assistant", content: "Done — moved that email to Trash." }]);
+        assistantContent = "Done — moved that email to Trash.";
       } catch {
-        setMessages([...updated, { role: "assistant", content: "I couldn't delete that email. Please try again." }]);
+        assistantContent = "I couldn't delete that email. Please try again.";
       }
     } else if (calendarMatch) {
       try {
         const parsed = JSON.parse(calendarMatch[1]);
         setCalendarEvent(parsed);
         setCalendarStatus("idle");
-        setMessages([...updated, { role: "assistant", content: `Got it — I'll add "${parsed.title}" to your calendar. Confirm below.` }]);
+        assistantContent = `Got it — I'll add "${parsed.title}" to your calendar. Confirm below.`;
       } catch {
-        setMessages([...updated, { role: "assistant", content: "I understood your event but couldn't parse the details. Please try again." }]);
+        assistantContent = "I understood your event but couldn't parse the details. Please try again.";
       }
-    } else {
-      setMessages([...updated, { role: "assistant", content: reply }]);
     }
+
+    const userMsg: Message = { role: "user", content: text };
+    const assistantMsg: Message = { role: "assistant", content: assistantContent };
+    setMessages([...updated, assistantMsg]);
     setLoading(false);
     inputRef.current?.focus();
+
+    if (activeConvId === null) {
+      const title = text.slice(0, 40) + (text.length > 40 ? "…" : "");
+      const createRes = await fetch("/api/chat/history", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title }),
+      });
+      if (createRes.ok) {
+        const { id: newId } = await createRes.json();
+        setActiveConvId(newId);
+        setConversations(prev => [{ id: newId, title }, ...prev]);
+        await fetch(`/api/chat/history/${newId}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ messages: [userMsg, assistantMsg] }),
+        });
+      }
+    } else {
+      await fetch(`/api/chat/history/${activeConvId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: [userMsg, assistantMsg] }),
+      });
+    }
   }
 
   async function saveCalendarEvent() {
@@ -98,113 +179,119 @@ export default function Dashboard() {
     setSendStatus(res.ok ? "sent" : "error");
   }
 
-  useEffect(() => {
-    fetch("/api/gmail/inbox", { cache: "no-store" })
-      .then(r => r.ok ? r.json() : null)
-      .then(data => { if (data?.emails) setEmails(data.emails); });
-  }, []);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, loading]);
-
   return (
-    <div className={`home-page${chatStarted ? " chat-started" : ""}`}>
+    <div className="chat-layout">
 
-      <div className="nav-bar">
-        <nav>
-          <Link className="nav-link" href="/dashboard">Dashboard</Link>
-          <Link className="nav-link" href="/email">Email</Link>
-          <Link className="nav-link" href="/priority">Priority</Link>
-          <Link className="nav-link" href="/calender">Calendar</Link>
-          <Link className="nav-link" href="/task">Task</Link>
-          <Link className="nav-link" href="/task">Notes</Link>
-        </nav>
+      <div className="chat-sidebar">
+        <div className="chat-sidebar-header">
+          <span className="chat-sidebar-brand">Mindframe</span>
+          <button className="chat-new-btn" onClick={startNewChat}>+ New</button>
+        </div>
+        <div className="chat-history-list">
+          {conversations.map((conv) => (
+            <div
+              key={conv.id}
+              className={`chat-history-item${activeConvId === conv.id ? " chat-history-item--active" : ""}`}
+              onClick={() => loadConversation(conv.id)}
+            >
+              <span className="chat-history-item-title">{conv.title}</span>
+              <button
+                className="chat-history-delete-btn"
+                onClick={(e) => { e.stopPropagation(); deleteConversation(conv.id); }}
+              >✕</button>
+            </div>
+          ))}
+        </div>
       </div>
 
-      <div className="user-button">
-        <UserButton />
-      </div>
+      <div className={`chat-main${chatStarted ? " chat-main--started" : ""}`}>
+        <div className="nav-bar">
+          <nav>
+            <Link className="nav-link" href="/dashboard">Dashboard</Link>
+            <Link className="nav-link" href="/email">Email</Link>
+            <Link className="nav-link" href="/priority">Priority</Link>
+            <Link className="nav-link" href="/calender">Calendar</Link>
+            <Link className="nav-link" href="/task">Task</Link>
+            <Link className="nav-link" href="/task">Notes</Link>
+          </nav>
+        </div>
 
-      <header className={`welcome-header${chatStarted ? " welcome-header--hidden" : ""}`}>
-        <h1 className="login-title">Welcome {name}</h1>
-      </header>
+        <div className="user-button">
+          <UserButton />
+        </div>
 
-      <div className={`chat-window${chatStarted ? " chat-window--visible" : ""}`}>
-        {messages.map((m, i) => (
-          <div key={i} className={`chat-message chat-message--${m.role}`}>
-            <span className="chat-message__label">{m.role === "user" ? "You" : "Mindframe"}</span>
-            <p>{m.content}</p>
-          </div>
-        ))}
-        {loading && (
-          <div className="chat-message chat-message--assistant">
-            <span className="chat-message__label">Mindframe</span>
-            <p>Thinking...</p>
+        <header className={`welcome-header${chatStarted ? " welcome-header--hidden" : ""}`}>
+          <h1 className="login-title">Welcome {name}</h1>
+        </header>
+
+        <div className={`chat-window${chatStarted ? " chat-window--visible" : ""}`}>
+          {messages.map((m, i) => (
+            <div key={i} className={`chat-message chat-message--${m.role}`}>
+              <span className="chat-message__label">{m.role === "user" ? "You" : "Mindframe"}</span>
+              <p>{m.content}</p>
+            </div>
+          ))}
+          {loading && (
+            <div className="chat-message chat-message--assistant">
+              <span className="chat-message__label">Mindframe</span>
+              <p>Thinking...</p>
+            </div>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+
+        {calendarEvent && (
+          <div className="email-draft-card">
+            <h3>Calendar Event</h3>
+            <label>Title</label>
+            <input value={calendarEvent.title} onChange={(e) => setCalendarEvent({ ...calendarEvent, title: e.target.value })} />
+            <label>Start</label>
+            <input type="datetime-local" value={calendarEvent.start.slice(0, 16)} onChange={(e) => setCalendarEvent({ ...calendarEvent, start: e.target.value })} />
+            <label>End</label>
+            <input type="datetime-local" value={(calendarEvent.end ?? "").slice(0, 16)} onChange={(e) => setCalendarEvent({ ...calendarEvent, end: e.target.value })} />
+            <label>Description</label>
+            <textarea rows={3} value={calendarEvent.description ?? ""} onChange={(e) => setCalendarEvent({ ...calendarEvent, description: e.target.value })} />
+            <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
+              <button onClick={saveCalendarEvent} disabled={calendarStatus === "saving" || calendarStatus === "saved"}>
+                {calendarStatus === "saving" ? "Saving..." : calendarStatus === "saved" ? "Saved!" : "Add to Calendar"}
+              </button>
+              <button onClick={() => { setCalendarEvent(null); setCalendarStatus("idle"); }}>Dismiss</button>
+            </div>
+            {calendarStatus === "error" && <p style={{ color: "red" }}>Failed to save. Make sure your Google account is connected.</p>}
           </div>
         )}
-        <div ref={messagesEndRef} />
-      </div>
 
-      {calendarEvent && (
-        <div className="email-draft-card">
-          <h3>Calendar Event</h3>
-          <label>Title</label>
-          <input value={calendarEvent.title} onChange={(e) => setCalendarEvent({ ...calendarEvent, title: e.target.value })} />
-          <label>Start</label>
-          <input
-            type="datetime-local"
-            value={calendarEvent.start.slice(0, 16)}
-            onChange={(e) => setCalendarEvent({ ...calendarEvent, start: e.target.value })}
-          />
-          <label>End</label>
-          <input
-            type="datetime-local"
-            value={(calendarEvent.end ?? "").slice(0, 16)}
-            onChange={(e) => setCalendarEvent({ ...calendarEvent, end: e.target.value })}
-          />
-          <label>Description</label>
-          <textarea rows={3} value={calendarEvent.description ?? ""} onChange={(e) => setCalendarEvent({ ...calendarEvent, description: e.target.value })} />
-          <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
-            <button onClick={saveCalendarEvent} disabled={calendarStatus === "saving" || calendarStatus === "saved"}>
-              {calendarStatus === "saving" ? "Saving..." : calendarStatus === "saved" ? "Saved!" : "Add to Calendar"}
-            </button>
-            <button onClick={() => { setCalendarEvent(null); setCalendarStatus("idle"); }}>Dismiss</button>
+        {draft && (
+          <div className="email-draft-card">
+            <h3>Email Draft</h3>
+            <label>To</label>
+            <input value={draft.to} onChange={(e) => setDraft({ ...draft, to: e.target.value })} />
+            <label>Subject</label>
+            <input value={draft.subject} onChange={(e) => setDraft({ ...draft, subject: e.target.value })} />
+            <label>Body</label>
+            <textarea rows={6} value={draft.body} onChange={(e) => setDraft({ ...draft, body: e.target.value })} />
+            <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
+              <button onClick={sendEmail} disabled={sendStatus === "sending" || sendStatus === "sent"}>
+                {sendStatus === "sending" ? "Sending..." : sendStatus === "sent" ? "Sent!" : "Send"}
+              </button>
+              <button onClick={() => { setDraft(null); setSendStatus("idle"); }}>Dismiss</button>
+            </div>
+            {sendStatus === "error" && <p style={{ color: "red" }}>Failed to send. Try again.</p>}
           </div>
-          {calendarStatus === "error" && <p style={{ color: "red" }}>Failed to save. Make sure your Google account is connected.</p>}
-        </div>
-      )}
+        )}
 
-      {draft && (
-        <div className="email-draft-card">
-          <h3>Email Draft</h3>
-          <label>To</label>
-          <input value={draft.to} onChange={(e) => setDraft({ ...draft, to: e.target.value })} />
-          <label>Subject</label>
-          <input value={draft.subject} onChange={(e) => setDraft({ ...draft, subject: e.target.value })} />
-          <label>Body</label>
-          <textarea rows={6} value={draft.body} onChange={(e) => setDraft({ ...draft, body: e.target.value })} />
-          <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
-            <button onClick={sendEmail} disabled={sendStatus === "sending" || sendStatus === "sent"}>
-              {sendStatus === "sending" ? "Sending..." : sendStatus === "sent" ? "Sent!" : "Send"}
-            </button>
-            <button onClick={() => { setDraft(null); setSendStatus("idle"); }}>Dismiss</button>
-          </div>
-          {sendStatus === "error" && <p style={{ color: "red" }}>Failed to send. Try again.</p>}
+        <div className={`search-container${chatStarted ? " search-container--chat" : ""}`}>
+          <input
+            ref={inputRef}
+            className="search-bar"
+            type="text"
+            placeholder={chatStarted ? "Send a message…" : "What would you like to complete today"}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+            disabled={loading}
+          />
         </div>
-      )}
-
-      <div className={`search-container${chatStarted ? " search-container--chat" : ""}`}>
-        <input
-          ref={inputRef}
-          className="search-bar"
-          type="text"
-          placeholder={chatStarted ? "Send a message…" : "What would you like to complete today"}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-          disabled={loading}
-        />
       </div>
     </div>
   );
