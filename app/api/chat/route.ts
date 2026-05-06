@@ -35,6 +35,15 @@ Rules for calendar events:
 - If no end time is given, default end to 1 hour after start.
 - If the description is not mentioned, omit it from the JSON.
 
+When the user wants to create a task, add something to their to-do list, or wants to remember to do something, respond ONLY with:
+<task_create>{"name":"TASK NAME","description":"DESCRIPTION","dueDate":"YYYY-MM-DD","priority":"low|medium|high"}</task_create>
+Rules for tasks:
+- Extract a clear, concise task name from the user's message.
+- Include a description if the user provided extra context.
+- Parse relative due dates ("tomorrow", "next Friday", "by end of week") into YYYY-MM-DD using today's date: ${new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}.
+- priority must be exactly "low", "medium", or "high"; default to "medium" if unclear.
+- Omit dueDate or description from the JSON if not mentioned.
+
 Rules for matching emails:
 - "the email from Google" → match by From field containing "Google"
 - "the one about the meeting" → match by Subject or Preview containing "meeting"

@@ -15,7 +15,7 @@ export async function POST(req: Request){
     const {to, subject, body} = await req.json();
 
     if(!to || !subject || !body){
-        return NextResponse.json({erro: "missing fileds"}, {status: 401});
+        return NextResponse.json({error: "missing fields"}, {status: 401});
     }
 
     const result = await client.execute({

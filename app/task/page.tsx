@@ -1,5 +1,5 @@
 "use client"
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
 import { useForm } from 'react-hook-form';
@@ -18,6 +18,10 @@ export default function Task() {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [prompt, setPrompt] = useState("");
+    const [promptLoading, setPromptLoading] = useState(false);
+    const [aiMessage, setAiMessage] = useState<string | null>(null);
+    const promptRef = useRef<HTMLInputElement>(null);
     const { register, handleSubmit, reset } = useForm<TaskFormData>();
 
     useEffect(() => {
@@ -43,6 +47,53 @@ export default function Task() {
         await fetch(`/api/tasks/${id}`, { method: "DELETE" });
         setTasks(tasks.filter((t) => t.id !== id));
     };
+
+    async function sendPrompt() {
+        const text = prompt.trim();
+        if (!text || promptLoading) return;
+        setPromptLoading(true);
+        setAiMessage(null);
+        setPrompt("");
+
+        const res = await fetch("/api/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ messages: [{ role: "user", content: text }] }),
+        });
+
+        const data = await res.json();
+        const reply: string = data.response ?? "";
+
+        const taskMatch = reply.match(/<task_create>([\s\S]*?)<\/task_create>/);
+        if (taskMatch) {
+            try {
+                const taskData = JSON.parse(taskMatch[1]);
+                const createRes = await fetch("/api/tasks", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(taskData),
+                });
+                const { id } = await createRes.json();
+                const newTask: Task = {
+                    id,
+                    name: taskData.name ?? "",
+                    description: taskData.description ?? "",
+                    dueDate: taskData.dueDate ?? "",
+                    priority: taskData.priority ?? "",
+                };
+                setTasks((prev) => [newTask, ...prev]);
+                setAiMessage(`Added "${newTask.name}" to your tasks.`);
+            } catch {
+                setAiMessage("Couldn't parse the task. Please try again.");
+            }
+        } else {
+            setAiMessage(reply || "No task was created.");
+        }
+
+        setPromptLoading(false);
+        setTimeout(() => setAiMessage(null), 4000);
+        promptRef.current?.focus();
+    }
 
     return (
         <div>
@@ -138,9 +189,24 @@ export default function Task() {
                 </div>
             )}
 
-            <div className="task-page-button">
-                <button onClick={() => setIsModalOpen(true)}>+ Add Task</button>
+            {aiMessage && (
+                <div className="task-ai-message">{aiMessage}</div>
+            )}
+
+            <div className="task-prompt-container">
+                <input
+                    ref={promptRef}
+                    className="search-bar"
+                    type="text"
+                    placeholder={promptLoading ? "Thinking..." : "Describe a task to add…"}
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && sendPrompt()}
+                    disabled={promptLoading}
+                />
             </div>
+
+            <button className="task-page-button" onClick={() => setIsModalOpen(true)}>+ Add Task</button>
         </div>
     );
 }
