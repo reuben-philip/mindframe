@@ -2,17 +2,16 @@
 import { useEffect, useState } from "react";
 
 const THEMES = [
-  { id: "ember",  color: "#ec5615", label: "Ember"  },
-  { id: "ocean",  color: "#38bdf8", label: "Ocean"  },
-  { id: "forest", color: "#22c55e", label: "Forest" },
-  { id: "violet", color: "#a78bfa", label: "Violet" },
+  { id: "yellow", color: "#eab308", label: "Yellow" },
+  { id: "blue",   color: "#38bdf8", label: "Blue"   },
+  { id: "purple", color: "#a78bfa", label: "Purple" },
 ];
 
 export default function ThemeSwitcher() {
-  const [active, setActive] = useState("ember");
+  const [active, setActive] = useState("yellow");
 
   useEffect(() => {
-    const saved = localStorage.getItem("theme") ?? "ember";
+    const saved = localStorage.getItem("theme") ?? "yellow";
     setActive(saved);
     document.documentElement.setAttribute("data-theme", saved);
   }, []);
