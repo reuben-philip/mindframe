@@ -46,7 +46,7 @@ export default function Calendar() {
                     <Link className="nav-link" href="/priority">Priority</Link>
                     <Link className="nav-link" href="/calender">Calendar</Link>
                     <Link className="nav-link" href="/task">Task</Link>
-                    <Link className="nav-link" href="/task">Notes</Link>
+                    <Link className="nav-link" href="/notes">Notes</Link>
                 </nav>
             </div>
             <div className="user-button">

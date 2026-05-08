@@ -8,6 +8,7 @@ type Message = { role: "user" | "assistant"; content: string };
 type EmailDraft = { to: string; subject: string; body: string };
 type CalendarEvent = { title: string; start: string; end?: string; description?: string };
 type Conversation = { id: number; title: string };
+type Task = { id: number; name: string; description: string; dueDate: string; priority: string };
 
 export default function Dashboard() {
   const { user } = useUser();
@@ -22,6 +23,7 @@ export default function Dashboard() {
   const [calendarEvent, setCalendarEvent] = useState<CalendarEvent | null>(null);
   const [calendarStatus, setCalendarStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [emails, setEmails] = useState<{ id: string; from: string; subject: string; snippet: string; date: string }[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConvId, setActiveConvId] = useState<number | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -42,6 +44,10 @@ export default function Dashboard() {
     fetch("/api/gmail/inbox", { cache: "no-store" })
       .then(r => r.ok ? r.json() : null)
       .then(data => { if (data?.emails) setEmails(data.emails); });
+
+    fetch("/api/tasks")
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data?.tasks) setTasks(data.tasks); });
   }, []);
 
   useEffect(() => {
@@ -88,7 +94,7 @@ export default function Dashboard() {
     const res = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages: updated, userName: name, emails }),
+      body: JSON.stringify({ messages: updated, userName: name, emails, tasks }),
     });
 
     const data = await res.json();
@@ -212,7 +218,7 @@ export default function Dashboard() {
             <Link className="nav-link" href="/priority">Priority</Link>
             <Link className="nav-link" href="/calender">Calendar</Link>
             <Link className="nav-link" href="/task">Task</Link>
-            <Link className="nav-link" href="/task">Notes</Link>
+            <Link className="nav-link" href="/notes">Notes</Link>
           </nav>
         </div>
 

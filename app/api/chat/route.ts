@@ -4,7 +4,7 @@ import { InferenceClient } from "@huggingface/inference";
 const client = new InferenceClient(process.env.HF_API_TOKEN!);
 
 export async function POST(req: NextRequest) {
-  const { messages, userName, emails } = await req.json();
+  const { messages, userName, emails, tasks } = await req.json();
 
   const emailContext = emails?.length
     ? `\n\nThe user's current inbox (${emails.length} emails):\n` +
@@ -15,11 +15,20 @@ export async function POST(req: NextRequest) {
       }).join("\n\n")
     : "";
 
+  const taskContext = tasks?.length
+    ? `\n\nThe user's current tasks (${tasks.length} total):\n` +
+      tasks.map((t: any, i: number) => {
+        const due = t.dueDate ? `Due: ${t.dueDate}` : "No due date";
+        const desc = t.description ? `  Notes: ${t.description}` : "";
+        return `[${i + 1}] "${t.name}" | ${due} | Priority: ${t.priority || "medium"}${desc}`;
+      }).join("\n")
+    : "";
+
   const systemPrompt = {
     role: "system" as const,
     content: `You are Mindframe, a personal productivity assistant for ${userName ?? "the user"}.
 Your job is to help them stay organized, focused, and on top of their day.
-${emailContext}
+${emailContext}${taskContext}
 
 When the user wants to compose or send a NEW email, respond ONLY with:
 <email_draft>{"to":"EMAIL","subject":"SUBJECT","body":"BODY"}</email_draft>
@@ -34,6 +43,13 @@ Rules for calendar events:
 - If no time is given, use a date-only string (YYYY-MM-DD) for start and end.
 - If no end time is given, default end to 1 hour after start.
 - If the description is not mentioned, omit it from the JSON.
+
+When the user asks for a timeline, schedule, plan, or breakdown for a task (e.g. "give me a timeline for X", "how should I plan X", "when should I work on X"):
+- Reference the task from their task list above if it matches, including its due date.
+- Break the work into concrete phases or milestones with suggested dates, working backwards from the due date.
+- Today's date is ${new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}.
+- Keep the timeline realistic: account for the time remaining and the task's priority.
+- Format the response as a short numbered list of phases with dates (e.g. "Day 1–2: Research…").
 
 When the user wants to create a task, add something to their to-do list, or wants to remember to do something, respond ONLY with:
 <task_create>{"name":"TASK NAME","description":"DESCRIPTION","dueDate":"YYYY-MM-DD","priority":"low|medium|high"}</task_create>
