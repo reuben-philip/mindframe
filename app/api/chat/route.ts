@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import { InferenceClient } from "@huggingface/inference";
 
 const client = new InferenceClient(process.env.HF_API_TOKEN!);
 
 export async function POST(req: NextRequest) {
+
+  const { userId } = await auth(); 
+                      
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  
   const { messages, userName, emails, tasks } = await req.json();
 
   const emailContext = emails?.length
