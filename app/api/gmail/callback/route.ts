@@ -50,9 +50,6 @@ export async function GET(req: Request) {
     const refreshToken = tokens.refresh_token;
 
     if (!refreshToken) {
-      // Google only returns a refresh_token on the first consent grant.
-      // If the old token exists, keep it (scopes may be fine).
-      // Otherwise force the user to re-connect via /api/gmail/connect.
       const existing = await client.execute({
         sql: `SELECT refresh_token FROM gmail_tokens WHERE user_id = ? LIMIT 1`,
         args: [userId],
@@ -100,7 +97,6 @@ export async function GET(req: Request) {
     const googleError = error?.response?.data?.error;
     console.error("Gmail token exchange failed:", googleError, error?.response?.data);
 
-    // Check if an earlier invocation already saved the token successfully.
     const existing = await client.execute({
       sql: `SELECT 1 FROM gmail_tokens WHERE user_id = ? LIMIT 1`,
       args: [userId],
